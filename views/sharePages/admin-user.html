@@ -1,0 +1,92 @@
+<div class="mdui-table-fluid">
+    <table class="mdui-table" id="rater-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>参与人名称</th>
+                <th class="mdui-table-col-numeric">总票数</th>
+                <th class="mdui-table-col-numeric">所投票数</th>
+                <th class="mdui-table-col-numeric">剩余票数</th>
+                <!-- <th class="mdui-table-col-numeric">创建时间</th> -->
+                <th class="mdui-table-col-numeric">操作</th>
+            </tr>
+        </thead>
+        <tbody id="tb">
+            <% 
+            for(var i=0;i<data.users.length;i++){ 
+                var d = data.users[i];
+            %>
+                <tr class="<%= d._id %>">
+                    <td>
+                        <%= i+1 %>
+                    </td>
+                    <td>
+                        <%= d.name %>
+                    </td>
+                    <td>
+                        <%= d.type %>
+                    </td>
+                    <td>
+                        <%= d.type - d.ticket %>
+                    </td>
+                    <td>
+                        <%= d.ticket %>
+                    </td>
+                    <td>
+                        <button id="<%= d._id %>" class="mdui-btn mdui-color-blue-accent mdui-ripple" onclick="openDialog1(this)">所投竞聘人</button>
+                    </td>
+                </tr>
+                <% }%>
+        </tbody>
+    </table>
+</div>
+<div class="mdui-dialog" id="list-dialog" style="overflow:auto">
+    <table id="result-table" class="mdui-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>所投竞聘人</th>
+                <th class="mdui-table-col-numeric">所投票数</th>
+            </tr>
+        </thead>
+        <tbody id="tbody-list"></tbody>
+    </table>
+</div>
+<script>
+    var inst = new mdui.Dialog('#list-dialog');
+    function openDialog1(obj) {
+        var uid = obj.id;
+        $.ajax({
+            method: 'post',
+            url: '/getAllDepartList',
+            success: function (data) {
+                var arr = [];
+                for (var i = 0; i < data.length; i++) {
+                    var u = data[i].userList;
+                    for (var j = 0; j < u.length; j++) {
+                        if (u[j].userId._id == uid) {
+                            arr.push({
+                                name: data[i].name,
+                                ticket: u[j].number
+                            });
+                        }
+                    }
+                }
+                $("#tbody-list").html("");
+                var html = "";
+                for (var i = 0; i < arr.length; i++) {
+                    html += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${arr[i].name}</td>
+                        <td class="mdui-table-col-numeric">${arr[i].ticket}</td>
+                    </tr>
+                    `;
+                }
+
+                $("#tbody-list").html(html);
+                inst.open();
+            }
+        });
+    }
+</script>

@@ -1,0 +1,78 @@
+<% include ../sharePages/header.html %>
+    <div id="main" style="height:300px;padding:10px;margin-bottom:-10px"></div>
+    <div class="mdui-container" style="margin-bottom:20px;">
+        <div class="mdui-table-fluid">
+            <table class="mdui-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>竞聘人姓名</th>
+                        <th class="mdui-table-col-numeric">票数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                     for(var i=0;i<data.departments.length;i++){ 
+                         var d = data.departments[i];
+                    %>
+                    <tr>
+                        <td><%= i+1 %></td>
+                        <td><%= d.name %></td>
+                        <td><%= d.votes %></td>
+                    </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        function initChart(){
+            $.ajax({
+                method:"post",
+                url:"/getChartData",
+                success:function(data){
+                    // 基于准备好的dom，初始化echarts实例
+                    var myChart = echarts.init(document.getElementById('main'));
+
+                    // 指定图表的配置项和数据
+                    var option = {
+                        title: {
+                            text: '综合服务部经理内部竞聘'
+                        },
+                        xAxis: {
+                            data: data.xAxisData,
+                            axisLabel: {
+                                interval: 0,
+                                rotate: 40
+                            },
+                        },
+                        yAxis: {},
+                        series: [{
+                            name: '销量',
+                            type: 'bar',
+                            data: data.seriesData,
+                            itemStyle: {
+                                color: "#448AFF"
+                            },
+                            label: {
+                                show: true,//是否展示  
+                                position: 'top',
+                                textStyle: {
+                                    fontWeight: 'bolder',
+                                    fontSize: '12',
+                                    fontFamily: '微软雅黑',
+                                    color: "#646464"
+                                }
+                            }
+                        }]
+                    };
+
+                    // 使用刚指定的配置项和数据显示图表。
+                    myChart.setOption(option);
+                }
+            })
+        }
+        initChart();
+    </script>
+
+    <% include ../sharePages/footer.html %>

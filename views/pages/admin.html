@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="/mdui-v0.3.0/css/mdui.min.css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/mdui-v0.3.0/js/mdui.min.js"></script>
+    <script type="text/javascript" src="/js/xlsx.full.min.js"></script>
+    <script type="text/javascript" src="/js/Blob.js"></script>
+    <title>后台管理</title>
+    <style>
+        #content-drawer {
+            -webkit-box-shadow: 3px 0px 7px rgba(0, 0, 0, 0.2);
+            box-shadow: 3px 0px 7px rgba(0, 0, 0, 0.2);
+        }
+
+        #content-main {
+            padding: 20px;
+            width: 100%;
+        }
+
+        .sum td {
+            color: red;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+
+<body class="mdui-drawer-body-left mdui-appbar-with-toolbar mdui-theme-primary-indigo">
+    <!-- 头部 -->
+    <header class="mdui-appbar mdui-appbar-fixed" id="content-header">
+        <div class="mdui-toolbar mdui-color-theme">
+            <span class="mdui-btn mdui-btn-icon mdui-ripple mdui-ripple-white" mdui-drawer="{target: '#content-drawer', swipe: true}">
+                <i class="mdui-icon material-icons">menu</i>
+            </span>
+            <a href="/admin/depart" class="mdui-typo-headline mdui-hidden-xs">综合服务部经理内部竞聘</a>
+            <div class="mdui-toolbar-spacer"></div>
+            <button class="mdui-btn mdui-ripple" onclick="initData()">初始化选手</button>
+            <button class="mdui-btn mdui-ripple" onclick="initRater()">初始化评委</button>
+            <button class="mdui-btn mdui-ripple" onclick="refresh()">刷新页面</button>
+            <button class="mdui-btn mdui-ripple" onclick="exportA()">导出活动管理</button>
+            <button class="mdui-btn mdui-ripple" onclick="exportB()">导出参与管理</button>
+        </div>
+    </header>
+    <!-- 侧边栏 -->
+    <div class="mdui-drawer" id="content-drawer">
+        <ul class="mdui-list">
+            <li class="mdui-list-item item-depart" onclick="location.href='/admin/depart'">
+                <i class="mdui-list-item-icon mdui-icon material-icons">move_to_inbox</i>
+                <div class="mdui-list-item-content">活动管理</div>
+            </li>
+            <li class="mdui-list-item item-user" onclick="location.href='/admin/user'">
+                <i class="mdui-list-item-icon mdui-icon material-icons">send</i>
+                <div class="mdui-list-item-content">参与管理</div>
+            </li>
+        </ul>
+    </div>
+    <!-- 内容 -->
+    <div class="mdui-container" id="content-main">
+        <% if(type == 'depart'){ %>
+            <% include ../sharePages/admin-depart.html %>
+                <% }else{ %>
+                    <% include ../sharePages/admin-user.html %>
+                        <% } %>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>    
+        var url = window.location.href.split("/")[4];
+        if (url == "user") {
+            $(".item-user").addClass("mdui-list-item-active");
+        } else if (url == "depart") {
+            $(".item-depart").addClass("mdui-list-item-active");
+        }
+
+        //初始化选手
+        function initData() {
+            var res = confirm("所有选手的票数都将清零！！！确定要初始化？？");
+            if (res) {
+                $.ajax({
+                    method: 'post',
+                    url: '/initData',
+                    success: function (data) {
+                        window.location.reload();
+                    }
+                });
+            }
+        }
+
+        //初始化评委票数
+        function initRater() {
+            var res = confirm("是否初始化评委票数？？");
+            if (res) {
+                $.ajax({
+                    method: 'post',
+                    url: '/initRater',
+                    success: function (data) {
+                        window.location.reload();
+                    }
+                });
+            }
+        }
+
+        //导出活动管理
+        function exportA() {
+            event.preventDefault();
+            getListA(function () {
+                exportExcel('result-table', '活动管理', 'xlsx');
+            });
+        }
+
+        //导出参与管理
+        function exportB() {
+            event.preventDefault();
+            getListB(function () {
+                exportExcel('result-table', '参与管理', 'xlsx');
+            });
+        }
+
+        //导出活动管理
+        function exportExcel(name, title, type, fn, dl) {
+            var elt = document.getElementById(name);
+            var wb = XLSX.utils.table_to_book(elt, { sheet: "Sheet JS" });
+            return dl ?
+                XLSX.write(wb, { bookType: type, bookSST: true, type: 'base64' }) :
+                XLSX.writeFile(wb, fn || title + '.' + (type || 'xlsx'));
+        }
+
+        function getListA(func) {
+            var ids = $("#tb").children();
+            var idsArr = [];
+            var temp = 0;
+            $("#tbody-list").html("");
+            for (var i = 0; i < ids.length; i++) {
+                if (ids[i].className != "sum") {
+                    idsArr.push(ids[i].className);
+                }
+            }
+            var timer = setInterval(function () {
+                if (temp == idsArr.length) {
+                    clearInterval(timer);
+                    $("#tbody-list").append(ids[ids.length - 1]);
+                    func();
+                }
+            }, 0);
+            setTimeout(function () {
+                for (var i = 0; i < idsArr.length; i++) {
+                    (function (i) {
+                        $.ajax({
+                            method: 'post',
+                            url: '/getList',
+                            data: {
+                                dId: idsArr[i]
+                            },
+                            success: function (data) {
+                                var html = "", typeName = "";
+                                html += `
+                                <tr>
+                                    <td>竞聘人</td>
+                                    <td>${data.name}</td>
+                                    <td class="mdui-table-col-numeric">${data.status}</td>
+                                    <td class="mdui-table-col-numeric">${data.votes}</td>
+                                </tr>
+                                `;
+                                for (var i = 0; i < data.userList.length; i++) {
+                                    var u = data.userList[i].userId;
+                                    html += `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td>${u.name}</td>
+                                    <td class="mdui-table-col-numeric">${u.type}</td>
+                                    <td class="mdui-table-col-numeric">${data.userList[i].number}</td>
+                                </tr>
+                                `;
+                                }
+                                html += `
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="mdui-table-col-numeric"></td>
+                                    <td class="mdui-table-col-numeric"></td>
+                                </tr>
+                                <tr>
+                                    <td>————————</td>
+                                    <td>————————</td>
+                                    <td class="mdui-table-col-numeric">————————</td>
+                                    <td class="mdui-table-col-numeric">————————</td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="mdui-table-col-numeric"></td>
+                                    <td class="mdui-table-col-numeric"></td>
+                                </tr>
+                                `;
+                                $("#tbody-list").append(html);
+                                temp++;
+                            }
+                        });
+                    })(i);
+                }
+            }, 0);
+        }
+
+        function getListB(func) {
+            var ids = $("#tb").children();
+            var idsArr = [];
+            $("#tbody-list").html("");
+            for (var i = 0; i < ids.length; i++) {
+                idsArr.push(ids[i].className);
+            }
+            $.ajax({
+                method: 'post',
+                url: '/getAllDepartList',
+                success: function (data) {
+                    var html = "";
+
+                    var alldata = [];
+                    for (var z = 0; z < idsArr.length; z++) {
+                        var arr = [];
+                        for (var i = 0; i < data.length; i++) {
+                            var u = data[i].userList;
+                            for (var j = 0; j < u.length; j++) {
+                                if (u[j].userId._id == idsArr[z]) {
+                                    arr.push({
+                                        name: data[i].name,
+                                        ticket: u[j].number
+                                    });
+                                }
+                            }
+                        }
+                        alldata.push({
+                            pname: idsArr[z],
+                            arr: arr
+                        });
+                    }
+
+                    for (var i = 0; i < alldata.length; i++) {
+                        var arr2 = alldata[i].arr;
+                        var pname = $($(`tr.${alldata[i].pname}`).children()[1]).text();
+                        var pticket = $($(`tr.${alldata[i].pname}`).children()[3]).text();
+                        html += `
+                        <tr>
+                            <td>参与人</td>
+                            <td>${pname}</td>
+                            <td class="mdui-table-col-numeric">${pticket}</td>
+                        </tr>
+                        `;
+                        for (var j = 0; j < arr2.length; j++) {
+                            html += `
+                            <tr>
+                                <td>${j + 1}</td>
+                                <td>${arr2[j].name}</td>
+                                <td class="mdui-table-col-numeric">${arr2[j].ticket}</td>
+                            </tr>
+                            `;
+                        }
+                        html += `
+                        <tr>
+                            <td></td>
+                            <td class="mdui-table-col-numeric"></td>
+                            <td class="mdui-table-col-numeric"></td>
+                        </tr>
+                        <tr>
+                            <td>————————</td>
+                            <td>————————</td>
+                            <td class="mdui-table-col-numeric">————————</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td class="mdui-table-col-numeric"></td>
+                            <td class="mdui-table-col-numeric"></td>
+                        </tr>
+                        `;
+                    }
+                    $("#tbody-list").html(html);
+                    func();
+                }
+            });
+        }
+
+        beginChat();
+        function beginChat() {
+            this.socket = io.connect();
+            socket.on('connect', function () {
+                socket.on('disconnect', function () {
+                    console.log("disconnect");
+                });
+            });
+        }
+
+        //刷新评委页面
+        function refresh() {
+            new beginChat().socket.send("refresh");
+        }
+
+    </script>
+</body>
+
+</html>

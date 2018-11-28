@@ -1,0 +1,124 @@
+body {
+    background: rgb(248, 248, 248);
+}
+
+#timg {
+    height: 50px;
+    background: skyblue;
+}
+
+body.mdui-bottom-nav-fixed .mdui-bottom-nav {
+    z-index: 1000;
+}
+
+.mdui-list-item-content {
+    font-weight: bold;
+}
+
+.mdui-card {
+    overflow: visible;
+}
+
+.mdui-select {
+    width: 50%;
+}
+
+.num {
+    color: rgb(128, 128, 128);
+    padding: 0 15px 10px 15px;
+    font-size: 15px;
+}
+
+.mdui-card-primary {
+    padding: 15px;
+}
+
+.mdui-card .mdui-select {
+    width: 80%;
+    font-size: 18px;
+}
+
+.rank {
+    text-align: center;
+    padding: 15px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.mdui-list-item:hover {
+    background: none;
+}
+
+.surplus {
+    position: fixed;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    top: 40%;
+    right: 0;
+}
+
+/* ------------------------------ */
+
+/* 登陆页面 */
+
+.loginmain {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    padding: 20px;
+}
+
+.loginmain .code .left {
+    width: 57%;
+    float: left;
+}
+
+.loginmain .code .right {
+    width: 40%;
+    float: right;
+    padding-top: 16px;
+}
+
+.loginmain .title {
+    font-size: 2.4rem;
+    text-align: center;
+    padding: 10px 10px 30px 10px;
+}
+
+.loginmain .type {
+    padding-top: 16px;
+}
+
+.loginmain .type .name {
+    font-size: 20px;
+    float: left;
+    width: 40%;
+    line-height: 36px;
+}
+
+.loginmain .type .sel {
+    float: right;
+    width: 60%;
+}
+
+.loginmain .type .sel .mdui-select {
+    width: 100%;
+}
+
+.loginmain .into {
+    padding-top: 25px;
+}
+
+.loginmain .into button {
+    height: 45px;
+}
+
+.clearfix:after {
+    content: "";
+    display: block;
+    clear: both;
+}

@@ -1,0 +1,154 @@
+<% include ../sharePages/header.html %>
+    <img style="width: 100%;" class="mdui-img-fluid" src="/img/nav.png" />
+    <div class="mdui-container">
+        <% 
+                    for(var i=0;i<data.departments.length;i++){
+                        var depart = data.departments[i];
+                %>
+            <div class="mdui-card mdui-m-t-2 mdui-m-b-2">
+                <div class="mdui-card-media">
+                    <div class="mdui-card-primary">
+                        <div class="mdui-card-primary-title <%= depart._id %>">
+                            <%= depart.name %>
+                        </div>
+                    </div>
+                    <div class="num">
+                        您已投
+                        <span class="already <%= depart._id %>">0</span> 票
+                    </div>
+                </div>
+                <div class="mdui-card-actions">
+                    <div class="mdui-row">
+                        <div class="mdui-col-xs-6 mdui-text-center">
+                            <% if(data.type == 1){ %>
+                                <select class="mdui-select <%= depart._id %>" mdui-select>
+                                    <option value="1" selected>1票</option>
+                                </select>
+                                <% }else if(data.type == 2){ %>
+                                    <select class="mdui-select <%= depart._id %>" mdui-select>
+                                        <option value="1">1票</option>
+                                        <option value="2">2票</option>
+                                    </select>
+                                    <% }else if(data.type == 3){ %>
+                                        <select class="mdui-select <%= depart._id %>" mdui-select>
+                                            <option value="1">1票</option>
+                                            <option value="2">2票</option>
+                                            <option value="3">3票</option>
+                                        </select>
+                                        <% }else if(data.type == 4){ %>
+                                            <select class="mdui-select <%= depart._id %>" mdui-select>
+                                                <option value="1">1票</option>
+                                                <option value="2">2票</option>
+                                                <option value="3">3票</option>
+                                                <option value="4">4票</option>
+                                            </select>
+                                            <% }else{ %>
+                                                <select class="mdui-select <%= depart._id %>" mdui-select>
+                                                    <option value="1">1票</option>
+                                                    <option value="2">2票</option>
+                                                    <option value="3">3票</option>
+                                                    <option value="4">4票</option>
+                                                    <option value="5">5票</option>
+                                                </select>
+                                                <% } %>
+                        </div>
+                        <div class="mdui-col-xs-6">
+                            <% if(data.surplus == 0){ %>
+                                <button id="<%= depart._id %>" class="mdui-btn mdui-btn-block mdui-center mdui-ripple mdui-color-indigo-accent gotit" disabled onclick="vote(this)">投票</button>
+                                <% }else{ %>
+                                    <button id="<%= depart._id %>" class="mdui-btn mdui-btn-block mdui-center mdui-ripple mdui-color-indigo-accent gotit" onclick="vote(this)">投票</button>
+                                    <% } %>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+    </div>
+    <div class="surplus">
+        剩余
+        <span class="sur">
+            <%= data.surplus %>
+        </span> 票
+    </div>
+    <div class="box" style="display:none;">
+        <% 
+        for(var i=0;i<data.already.length;i++){ 
+            var p = data.already[i];
+            a = p.userList.filter(function(item){return item.userId == data.id});
+    %>
+            <div class="b <%= p._id %>">
+                <%= a[0].number %>
+            </div>
+            <% } %>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        $(".box .b").each(function () {
+            var a = $(this).attr("class").substring(2);
+            $("span.already." + a).text($(this).text().trim());
+        })
+        function vote(obj) {
+            var departId = obj.id;
+            var departName = $(".mdui-card-primary-title." + departId).text().trim();
+            var voteNum = parseInt($("select.mdui-select." + departId).val());
+            mdui.confirm('确定要投给 ' + departName + voteNum + '票 ?', '消息', function () {
+                $.ajax({
+                    method: 'post',
+                    url: '/vote',
+                    data: {
+                        departId,
+                        voteNum,
+                    },
+                    success: function (data) {
+                        if (data.result == 0) {
+                            mdui.alert("剩余票数不够");
+                        } else if (data.result == 1) {
+                            mdui.alert("投票成功!", "投票结果");
+                            // var n1 = parseInt($("span.votenum." + departId).text().trim());
+                            // n1 += voteNum;
+                            // $("span.votenum." + departId).text(n1);
+                            var n2 = parseInt($("span.already." + departId).text().trim());
+                            n2 += voteNum;
+                            $("span.already." + departId).text(n2);
+                            var n3 = parseInt($("span.sur").text().trim());
+                            n3 -= voteNum;
+                            $("span.sur").text(n3);
+                            if(n3 == 0){
+                                $(".gotit").attr("disabled","");
+                            }
+                            new beginChat().socket.send("hello voting");
+                        }
+                    }
+                });
+            }, function () { }, {
+                    confirmText: "确定",
+                    cancelText: "取消"
+                });
+        }
+        beginChat();
+        function beginChat() {
+            this.socket = io.connect();
+            socket.on('connect', function () {
+
+                socket.on('message', function (msg) {
+                    if(msg == "refresh"){
+                        update();
+                    }
+                });
+
+                socket.on('disconnect', function () {
+                    console.log("disconnect");
+                });
+            });
+            // document.querySelector('.but').addEventListener("click",function(event){
+            //     event.preventDefault();
+            //     socket.send("hello voting");
+            // });
+        }
+        function update(){
+            window.location.reload();
+        }
+    </script>
+    <% include ../sharePages/footer.html %>

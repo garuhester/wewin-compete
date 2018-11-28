@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>屏幕实时显示</title>
+    <link rel="stylesheet" href="/css/index_style.css">
+    <script src="/js/echarts.common.min.js"></script>
+    <script src="/js/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="header" id="demo">
+        <div class="title">
+            <img src="/img/logo.png" alt="">
+            <div>综合服务部经理内部竞聘排名</div>
+        </div>
+        <div class="canvaszz">
+            <div id="main" style="height:100vh"></div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var myChart = "";
+        function update() {
+            $.ajax({
+                method: "post",
+                url: "/getChartData",
+                success: function (data) {
+                    myChart.setOption({ //加载数据图表
+                        xAxis: {
+                            data: data.xAxisData,
+                        },
+                        series: [{
+                            data: data.seriesData
+                        }]
+                    });
+                }
+            });
+        }
+
+        function initChart() {
+            $.ajax({
+                method: "post",
+                url: "/getChartData",
+                success: function (data) {
+                    // 基于准备好的dom，初始化echarts实例
+                    myChart = echarts.init(document.getElementById('main'));
+
+                    // 指定图表的配置项和数据
+                    var option = {
+                        xAxis: {
+                            data: data.xAxisData,
+                            axisLabel: {
+                                show: true,
+                                fontSize: '20',
+                                color: "#fff",
+                                fontWeight: 'bolder',
+                                margin: 7
+                            },
+                            axisLine: {
+                                symbolSize: [100, 100],
+                                lineStyle: {
+                                    color: '#fff',
+                                    width: 3
+                                }
+                            },
+                            axisTick: {
+                                show: false
+                            }
+                        },
+                        grid: {
+                            left: '0%',
+                            right: '0%',
+                            top: '25%',
+                            bottom: '15%',
+                            y2: 40
+                        },
+                        yAxis: {
+                            show: false
+                        },
+                        series: [{
+                            name: '销量',
+                            type: 'bar',
+                            data: data.seriesData,
+                            itemStyle: {
+                                color: "#fff"
+                            },
+                            barWidth: '40%',
+                            label: {
+                                normal: {
+                                    show: true,
+                                    position: 'top',
+                                    textStyle: {
+                                        fontWeight: 'bolder',
+                                        fontSize: '30',
+                                        fontFamily: '微软雅黑'
+                                    }
+                                }
+                            }
+                        }]
+                    };
+                    // 使用刚指定的配置项和数据显示图表。
+                    myChart.setOption(option);
+                }
+            })
+
+        }
+
+        function beginChat() {
+            this.socket = io.connect();
+            socket.on('connect', function () {
+                socket.on('message', function (msg) {
+                    update();
+                });
+
+                socket.on('disconnect', function () {
+                    console.log("disconnect");
+                });
+            });
+        }
+
+        initChart();
+        beginChat();
+    </script>
+</body>
+
+</html>

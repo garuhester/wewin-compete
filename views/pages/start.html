@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <% include ../sharePages/public.html %>
+        <title>综合服务部经理内部竞聘</title>
+</head>
+
+<body>
+    <div class="loginmain">
+        <div class="title">
+            综合服务部经理内部竞聘
+        </div>
+        <div class="mdui-textfield">
+            <input class="mdui-textfield-input input-name" type="text" placeholder="请输入姓名进入投票" />
+        </div>
+        <div class="into">
+            <button class="mdui-btn mdui-btn-block mdui-color-blue-accent mdui-ripple" onclick="intoVoting()">进入投票</button>
+        </div>
+    </div>
+    <script>
+        // localStorage.clear();
+        var storage = "wewin-compete";
+        var json = localStorage.getItem(storage);
+        json = JSON.parse(json);
+        if (json != null) {
+            if (json.name) {
+                $.ajax({
+                    method: 'post',
+                    url: '/intoVoting',
+                    data: {
+                        name: json.name
+                    },
+                    success: function (data) {
+                        if (data.result == 1) {
+                            window.location.href = "/";
+                        }
+                    }
+                });
+            } else {
+                snackbar("出错", 3000);
+            }
+        }
+
+        //进入投票
+        function intoVoting() {
+
+            var name = $(".input-name").val();
+
+            $.ajax({
+                method: 'post',
+                url: '/intoVoting',
+                data: {
+                    name: name
+                },
+                success: function (data) {
+                    if (data.result == 1) {
+                        var json = { name: name };
+                        localStorage.setItem(storage, JSON.stringify(json));
+                        window.location.href = "/";
+                    } else if (data.result == 0) {
+                        mdui.alert("抱歉!您不在投票名单中", "消息");
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
