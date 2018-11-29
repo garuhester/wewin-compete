@@ -82,18 +82,38 @@
             </div>
             <% } %>
     </div>
-
+    <div class="mdui-dialog" id="choose-dialog">
+        <div class="mdui-dialog-content">是否确认投票？</div>
+        <div class="mdui-dialog-actions">
+            <button class="mdui-btn mdui-ripple" onclick="sureVote()" mdui-dialog-confirm>确定</button>
+            <button class="mdui-btn mdui-ripple" mdui-dialog-cancel>取消</button>
+        </div>
+    </div>
+    <div class="mdui-dialog" id="success-dialog">
+        <div class="mdui-dialog-content" id="suc-title"></div>
+        <div class="mdui-dialog-actions">
+            <button class="mdui-btn mdui-ripple" mdui-dialog-cancel>确定</button>
+        </div>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        var inst = new mdui.Dialog('#choose-dialog');
+        var suc = new mdui.Dialog('#success-dialog');
+        var departId;
+        var temp = true;
         $(".box .b").each(function () {
             var a = $(this).attr("class").substring(2);
             $("span.already." + a).text($(this).text().trim());
-        })
+        });
         function vote(obj) {
-            var departId = obj.id;
-            var departName = $(".mdui-card-primary-title." + departId).text().trim();
-            var voteNum = parseInt($("select.mdui-select." + departId).val());
-            mdui.confirm('确定要投给 ' + departName + voteNum + '票 ?', '消息', function () {
+            departId = obj.id;
+            inst.open();
+        }
+        function sureVote(){
+            if(temp){
+                temp = false;
+                var departName = $(".mdui-card-primary-title." + departId).text().trim();
+                var voteNum = parseInt($("select.mdui-select." + departId).val());
                 $.ajax({
                     method: 'post',
                     url: '/vote',
@@ -103,9 +123,11 @@
                     },
                     success: function (data) {
                         if (data.result == 0) {
-                            mdui.alert("剩余票数不够");
+                            $("#suc-title").text("剩余票数不够!");
+                            suc.open();
                         } else if (data.result == 1) {
-                            mdui.alert("投票成功!", "投票结果");
+                            $("#suc-title").text("投票成功!");
+                            suc.open();
                             // var n1 = parseInt($("span.votenum." + departId).text().trim());
                             // n1 += voteNum;
                             // $("span.votenum." + departId).text(n1);
@@ -115,17 +137,15 @@
                             var n3 = parseInt($("span.sur").text().trim());
                             n3 -= voteNum;
                             $("span.sur").text(n3);
-                            if(n3 == 0){
-                                $(".gotit").attr("disabled","");
+                            if (n3 == 0) {
+                                $(".gotit").attr("disabled", "");
                             }
                             new beginChat().socket.send("hello voting");
                         }
+                        temp = true;
                     }
                 });
-            }, function () { }, {
-                    confirmText: "确定",
-                    cancelText: "取消"
-                });
+            }
         }
         beginChat();
         function beginChat() {
