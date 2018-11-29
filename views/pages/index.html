@@ -141,6 +141,12 @@
                                 $(".gotit").attr("disabled", "");
                             }
                             new beginChat().socket.send("hello voting");
+                        } else if(data.result == -1) {
+                            $("#suc-title").text("不在投票时间内，无法投票");
+                            suc.open();
+                        } else if (data.result == -2) {
+                            $("#suc-title").text("该选手已淘汰，无法投票");
+                            suc.open();
                         }
                         temp = true;
                     }

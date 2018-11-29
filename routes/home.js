@@ -1,5 +1,6 @@
 var User = require("../schemas/user");
 var Department = require("../schemas/department");
+var System = require("../schemas/system");
 
 //获取首页数据
 var getHomeData = function (user) {
@@ -53,50 +54,65 @@ var vote = function (req, res) {
         voteNum = parseInt(req.body.voteNum),
         userId = req.session.user.id;
 
-    //剩余票数是否>0
-    //投票数是否小于剩余票数
-    //选手总票数+1 && 选手增加参与人的投票记录userList
-    //参与人剩余票数-1
-    //共+1票 | 已投+1票(页面)
+    System.find({}, function (err, sys) {
+        var system = sys[0].type;
+        if (system == 1) {
+            //剩余票数是否>0
+            //投票数是否小于剩余票数
+            //选手总票数+1 && 选手增加参与人的投票记录userList
+            //参与人剩余票数-1
+            //共+1票 | 已投+1票(页面)
 
-    //剩余票数是否>0 && 投票数是否小于剩余票数
-    User.findById(userId, function (err, u1) {
-        if (u1.ticket != 0 && voteNum <= u1.ticket) {
-            Department.find({ '_id': departId, 'userList': { '$elemMatch': { 'userId': u1._id } } }, function (err, d1) {
-                //已经投过
-                if (d1.length != 0) {
-                    var cl = d1[0].userList.find((cl) => cl.userId == u1._id);
-                    var newNum = cl.number + voteNum;
-                    //选手总票数+1 && 选手更新参与人的投票记录userList
-                    Department.update({ '_id': departId, 'userList.userId': u1._id }, {
-                        '$set': {
-                            'userList.$.number': newNum
-                        }, '$inc': { 'votes': voteNum }
-                    }, function (err, art2) {
-                        //参与人剩余票数-1
-                        User.findByIdAndUpdate(userId, { '$inc': { 'ticket': voteNum * -1 } }, function (err, u2) {
-                            res.json({ result: 1 });
-                        });
+            //剩余票数是否>0 && 投票数是否小于剩余票数
+            User.findById(userId, function (err, u1) {
+                if (u1.ticket != 0 && voteNum <= u1.ticket) {
+                    Department.findById(departId, function (err, ddd) {
+                        if (ddd.status == "checked") {
+                            Department.find({ '_id': departId, 'userList': { '$elemMatch': { 'userId': u1._id } } }, function (err, d1) {
+                                //已经投过
+                                if (d1.length != 0) {
+                                    var cl = d1[0].userList.find((cl) => cl.userId == u1._id);
+                                    var newNum = cl.number + voteNum;
+                                    //选手总票数+1 && 选手更新参与人的投票记录userList
+                                    Department.update({ '_id': departId, 'userList.userId': u1._id }, {
+                                        '$set': {
+                                            'userList.$.number': newNum
+                                        }, '$inc': { 'votes': voteNum }
+                                    }, function (err, art2) {
+                                        //参与人剩余票数-1
+                                        User.findByIdAndUpdate(userId, { '$inc': { 'ticket': voteNum * -1 } }, function (err, u2) {
+                                            res.json({ result: 1 });
+                                        });
+                                    });
+                                } else { // 第一次投
+                                    var updateStr = {
+                                        userId: u1._id,
+                                        number: voteNum,
+                                    }
+                                    //选手总票数+1 && 选手增加参与人的投票记录userList
+                                    Department.findByIdAndUpdate(departId, { '$push': { 'userList': updateStr }, '$inc': { 'votes': voteNum } }, function (err, des) {
+                                        //参与人剩余票数-1
+                                        User.findByIdAndUpdate(userId, { '$inc': { 'ticket': voteNum * -1 } }, function (err, u2) {
+                                            res.json({ result: 1 });
+                                        });
+                                    });
+                                }
+
+                            });
+                        } else {
+                            res.json({ result: -2 });
+                        }
                     });
-                } else { // 第一次投
-                    var updateStr = {
-                        userId: u1._id,
-                        number: voteNum,
-                    }
-                    //选手总票数+1 && 选手增加参与人的投票记录userList
-                    Department.findByIdAndUpdate(departId, { '$push': { 'userList': updateStr }, '$inc': { 'votes': voteNum } }, function (err, des) {
-                        //参与人剩余票数-1
-                        User.findByIdAndUpdate(userId, { '$inc': { 'ticket': voteNum * -1 } }, function (err, u2) {
-                            res.json({ result: 1 });
-                        });
-                    });
+
+                } else {
+                    res.json({ result: 0 });
                 }
-
             });
         } else {
-            res.json({ result: 0 });
+            res.json({ result: -1 });
         }
     });
+
 }
 
 module.exports = {

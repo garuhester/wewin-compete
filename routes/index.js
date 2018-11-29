@@ -72,4 +72,6 @@ module.exports = function (app) {
 
     app.post("/changeStatus", admin.changeStatus);
 
+    app.post("/changeSystem", admin.changeSystem);
+
 }

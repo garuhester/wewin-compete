@@ -1,5 +1,6 @@
 var User = require("../schemas/user");
 var Department = require("../schemas/department");
+var System = require("../schemas/system");
 
 //获取后台管理数据
 var getAdminData = function (type) {
@@ -7,6 +8,7 @@ var getAdminData = function (type) {
         var data = {};
         data.departments = [];
         data.users = [];
+
         if (type == "depart") {
             Department.find().sort({ 'votes': -1 }).exec(function (err, des) {
                 data.departments = des;
@@ -16,12 +18,36 @@ var getAdminData = function (type) {
                     sum += d.votes;
                 }
                 data.sum = sum;
-                resolve(data);
+                System.find({}, function (err, sys) {
+                    //已有
+                    if (sys.length != 0) {
+                        data.system = sys[0].type;
+                        resolve(data);
+                    } else {
+                        var s = new System({});
+                        s.save(function (err, sys) {
+                            data.system = sys[0].type;
+                            resolve(data);
+                        });
+                    }
+                });
             });
         } else if (type == "user") {
             User.find(function (err, users) {
                 data.users = users;
-                resolve(data);
+                System.find({}, function (err, sys) {
+                    //已有用户
+                    if (sys.length != 0) {
+                        data.system = sys[0].type;
+                        resolve(data);
+                    } else {
+                        var s = new System({});
+                        s.save(function (err, sys) {
+                            data.system = sys[0].type;
+                            resolve(data);
+                        });
+                    }
+                });
             });
         }
     });
@@ -68,6 +94,15 @@ var changeStatus = function (req, res) {
     });
 }
 
+var changeSystem = function (req, res) {
+    var value = req.body.value;
+    var type = 0;
+    type = value == 0 ? 1 : 0;
+    System.findOneAndUpdate({ 'type': type }, { 'type': value }, function (err, sys) {
+        res.json({ result: value });
+    });
+}
+
 //初始化选手
 var initData = function (req, res) {
     Department.update({}, { '$set': { 'votes': 0, "userList": [] } }, { multi: true }, function (err, result) {
@@ -96,5 +131,6 @@ module.exports = {
     getList,
     deleteDepart,
     changeStatus,
+    changeSystem,
     getAllDepartList,
 }

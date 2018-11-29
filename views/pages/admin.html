@@ -57,6 +57,16 @@
                 <i class="mdui-list-item-icon mdui-icon material-icons">send</i>
                 <div class="mdui-list-item-content">参与管理</div>
             </li>
+            <li style="text-align:center">
+                <label class="mdui-switch">投票开关
+                    <% if(data.system == 0){ %>
+                        <input id="" type="checkbox" onchange="changeSystem(this)" />
+                        <% }else{ %>
+                            <input id="" type="checkbox" checked onchange="changeSystem(this)" />
+                            <% } %>
+                                <i class="mdui-switch-icon"></i>
+                </label>
+            </li>
         </ul>
     </div>
     <!-- 内容 -->
@@ -74,6 +84,34 @@
             $(".item-user").addClass("mdui-list-item-active");
         } else if (url == "depart") {
             $(".item-depart").addClass("mdui-list-item-active");
+        }
+
+        function changeSystem(obj) {
+            var value = 0, msg = "是否关闭投票系统?";
+            if (obj.checked) {
+                value = 1;
+                msg = "是否打开投票系统?"
+            }
+            var res = confirm(msg);
+            if (res) {
+                $.ajax({
+                    method: 'post',
+                    url: '/changeSystem',
+                    data: {
+                        value: value
+                    },
+                    success: function (data) {
+                        if (data.result == 1 || data.result == 0) {
+                            mdui.snackbar({
+                                message: '修改成功',
+                                position: 'top'
+                            });
+                        }
+                    }
+                });
+            } else {
+                obj.checked = !obj.checked;
+            }
         }
 
         //初始化选手
