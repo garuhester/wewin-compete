@@ -85,14 +85,14 @@
     <div class="mdui-dialog" id="choose-dialog">
         <div class="mdui-dialog-content">是否确认投票？</div>
         <div class="mdui-dialog-actions">
-            <button class="mdui-btn mdui-ripple" onclick="sureVote()" mdui-dialog-confirm>确定</button>
             <button class="mdui-btn mdui-ripple" mdui-dialog-cancel>取消</button>
+            <button class="mdui-btn mdui-ripple mdui-color-pink-400" onclick="sureVote()" mdui-dialog-confirm>确定</button>
         </div>
     </div>
     <div class="mdui-dialog" id="success-dialog">
         <div class="mdui-dialog-content" id="suc-title"></div>
         <div class="mdui-dialog-actions">
-            <button class="mdui-btn mdui-ripple" mdui-dialog-cancel>确定</button>
+            <button class="mdui-btn mdui-ripple mdui-color-pink-400" mdui-dialog-cancel>确定</button>
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
